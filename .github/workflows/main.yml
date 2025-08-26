@@ -3,7 +3,7 @@ name: argo
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */10 * * *'  # Runs every 10 hours
+    - cron: '0 */6 * * *'  # Runs every 10 hours
 
 jobs:
   empty-commit:
