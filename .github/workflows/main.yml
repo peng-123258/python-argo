@@ -1,44 +1,42 @@
-name: argo
+name: Keep Active
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */6 * * *'  # Runs every 10 hours
+    - cron: '0 */6 * * *'  # 每6小时运行一次
 
 jobs:
-  empty-commit:
+  update-repo:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create empty commit
+      - name: Configure Git
         run: |
-          git config --local user.email "pwhpp@outlook.com"
-          git config --local user.name "peng-123258"
-          git commit --allow-empty -m "Empty commit to keep repository active"
-          git push
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
 
-      - name: Commit time.txt to repo
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update time.txt
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # 如果 time.txt 不存在，说明是第一次运行
+          # 记录上海时区当前时间
+          current_time=$(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M:%S')
+          
           if [ ! -f time.txt ]; then
-            echo "首次生成时间：$(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M:%S')" > time.txt
+            echo "首次生成时间：$current_time" > time.txt
           else
-            echo "$(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M:%S')" > time.txt
+            echo "最后更新时间：$current_time" > time.txt
           fi
-
+          
           git add time.txt
 
-          # 如果有更改再提交
+      - name: Create commit
+        run: |
+          # 若time.txt有变更则提交内容，否则创建空提交
           if git diff --cached --quiet; then
-            echo "无变化，无需提交"
+            git commit --allow-empty -m "⏱️ 保持仓库活跃：$(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M:%S')"
           else
-            git commit -m "⏱️ 更新时间文件: $(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M:%S')"
-            git push origin HEAD:main
+            git commit -m "⏱️ 更新时间记录：$(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M:%S')"
           fi
+          git push
+
